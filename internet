@@ -1,0 +1,33 @@
+#!/bin/sh
+
+case $BLOCK_BUTTON in
+    1)
+        st -e sudo nmtui &
+        pkill -RTMIN+5 dwmblocks
+        ;;
+    2)
+        nmcli networking off
+        sleep 1
+        nmcli networking on
+        pkill -RTMIN+5 dwmblocks
+        ;;
+esac
+
+# Wi-Fi SSID
+wifi_ssid=$(nmcli -t -f active,ssid dev wifi | awk -F: '$1=="yes"{print $2}')
+
+if [ -n "$wifi_ssid" ]; then
+    wifiicon="󰖩 $wifi_ssid"
+else
+    wifiicon="󰖪"
+fi
+
+# Ethernet
+if [ "$(cat /sys/class/net/en*/operstate 2>/dev/null)" = "up" ]; then
+    ethericon=" "
+else
+    ethericon=""
+fi
+
+printf "%s%s\n" "$wifiicon" "$ethericon"
+

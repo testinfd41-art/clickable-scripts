@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# ~/.local/bin/nix-updates (clickable version)
+
+flake_dir="$HOME/nixos-dotfiles"
+cd "$flake_dir" || exit
+
+command -v jq >/dev/null 2>&1 || { echo "jq not found"; exit 1; }
+
+icon_update=" "  # box icon
+icon_ok="󰏓 "
+icon_error=""
+
+current=$(nix flake metadata --json | jq -r '.locks.nodes.nixpkgs.locked.rev // .locks.nixpkgs.locked.rev')
+latest=$(nix flake metadata github:NixOS/nixpkgs/nixos-25.05 --json | jq -r '.locked.rev')
+
+if [ -z "$current" ] || [ -z "$latest" ]; then
+    echo "$icon_error"
+    exit
+fi
+
+if [ "$current" != "$latest" ]; then
+    icon="$icon_update"
+else
+    icon="$icon_ok"
+fi
+
+echo "$icon"
+

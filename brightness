@@ -1,0 +1,27 @@
+#!/bin/sh
+# dwmblocks brightness module using brightnessctl
+
+# Functions to increase/decrease brightness
+increase() {
+    brightnessctl set +5%
+}
+
+decrease() {
+    brightnessctl set 5%-
+}
+
+# Handle mouse events
+case $BLOCK_BUTTON in
+    4) increase ;;  # Scroll up
+    5) decrease ;;  # Scroll down
+    1) brightnessctl set 50% ;;  # Left click -> set to 50% (optional)
+    3) brightnessctl set 100% ;; # Right click -> max brightness (optional)
+esac
+
+# Print current brightness percentage
+brightness_per=$(brightnessctl g)
+max_brightness=$(brightnessctl m)
+perc=$((brightness_per * 100 / max_brightness))
+
+echo "$icon ${perc}%"
+

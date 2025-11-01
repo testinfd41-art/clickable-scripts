@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Bluetooth status for dwmblocks (Nord + Nerd Font icons)
+
+icon_off="󰂲"     # Bluetooth disabled
+icon_on="󰂯"      # Bluetooth enabled, no device
+icon_connected="󰂱" # Device connected
+
+case $BLOCK_BUTTON in
+    1)  # Left click → open Bluetooth manager (or toggle menu)
+        blueman-manager &
+        ;;
+    2)  # Middle click → toggle Bluetooth power
+        if systemctl is-active --quiet bluetooth; then
+            powered=$(bluetoothctl show | grep "Powered:" | awk '{print $2}')
+            if [ "$powered" = "yes" ]; then
+                bluetoothctl power off
+            else
+                bluetoothctl power on
+            fi
+        else
+            sudo systemctl start bluetooth
+        fi
+        ;;
+esac
+
+
+# Check if the bluetooth service is active at all
+if ! systemctl is-active --quiet bluetooth; then
+    echo "$icon_off"
+    exit 0
+fi
+
+# Check if Bluetooth is powered on
+powered=$(bluetoothctl show | grep "Powered:" | awk '{print $2}')
+
+if [ "$powered" != "yes" ]; then
+    echo "$icon_off"
+    exit 0
+fi
+
+# Check for connected devices
+connected=$(bluetoothctl info | grep 'Name:' | awk -F': ' '{print $2}')
+
+if [ -z "$connected" ]; then
+    echo "$icon_on"
+else
+    echo "$icon_connected $connected"
+fi
+
