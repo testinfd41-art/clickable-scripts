@@ -1,0 +1,43 @@
+#!/bin/bash
+# dwmblocks: show Arch + AUR updates (yay only, clickable, list in notification)
+
+export PATH="/usr/local/bin:/usr/bin:/bin"
+
+# Handle clicks
+case "$BLOCK_BUTTON" in
+    1)
+        # Left click → open terminal and update system
+        setsid -f st -e bash -c 'yay -Syu; read -p "Press Enter to close..."'
+        ;;
+    2)
+        # Middle click → show list of updates in notification
+        updates=$(yay -Qu 2>/dev/null)
+        if [ -n "$updates" ]; then
+            # Limit notification length if too many updates
+            short=$(echo "$updates" | head -n 15)
+            total=$(echo "$updates" | wc -l)
+            if [ "$total" -gt 15 ]; then
+                short="$short\n… and $((total-15)) more"
+            fi
+            notify-send "  Packages to Update ($total)" "$short"
+        else
+            notify-send "  Up to Date" "No updates available."
+        fi
+        ;;
+    3)
+        # Right click → manual refresh
+        notify-send "   Refreshing..." "Updating package list..."
+        kill -44 "$(pidof dwmblocks)"
+        ;;
+esac
+
+# Count total updates
+updates=$(yay -Qu 2>/dev/null | wc -l)
+
+# Display for dwmblocks
+if [ "$updates" -gt 0 ]; then
+    echo " $updates"
+else
+    echo ""
+fi
+
