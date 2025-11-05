@@ -14,7 +14,7 @@ decrease() {
 case $BLOCK_BUTTON in
     4) increase ;;  # Scroll up
     5) decrease ;;  # Scroll down
-    1) brightnessctl set 50% ;;  # Left click -> set to 50% (optional)
+    1) brightnessctl set 0% ;;  # Left click -> set to 50% (optional)
     3) brightnessctl set 100% ;; # Right click -> max brightness (optional)
 esac
 

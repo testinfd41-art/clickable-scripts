@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# ===== CPU TEMP =====
+CPU_TEMP=$(sensors | awk '/^Tctl/ {gsub(/[+°C]/,""); gsub(/\..*/,""); print $2; exit}')
+[ -z "$CPU_TEMP" ] && CPU_TEMP="N/A"
+
+# ===== CPU USAGE (total) =====
+CPU_USE=$(top -bn1 | awk '/^%Cpu/ {print 100 - $8"%"}')
+[ -z "$CPU_USE" ] && CPU_USE="N/A"
+
+# ===== MEMORY USAGE =====
+# (Used = total - available)
+MEM_USE=$(free -m | awk '/^Mem/ {printf "%.1f", ($2 - $7)/1024}')
+
+# ===== COLORS & ICONS =====
+case $CPU_TEMP in
+    "N/A") COLOR="#d8dee9" && CPU_ICON="󰍛 ?" ;;
+    [7-9][6-9]|[8-9][0-9]|100) COLOR="#bf616a" && CPU_ICON="" ;;  # >75°C
+    [6][6-9]|7[0-5]) COLOR="#ebcb8b" && CPU_ICON="󰍛" ;;            # 66–75°C
+    *) COLOR="#a3be8c" && CPU_ICON="󰍛" ;;                          # <=65°C
+esac
+
+# ===== OUTPUT FOR DWM BLOCK =====
+echo " $CPU_ICON ${CPU_TEMP}°C - ${CPU_USE}   ${MEM_USE}g"
+
+# ===== CLICK ACTIONS =====
+case $BLOCK_BUTTON in
+    1) setsid -f st -e htop ;;  # Left-click opens htop
+esac
+
