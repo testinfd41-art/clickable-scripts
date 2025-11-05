@@ -26,9 +26,14 @@ case "$BLOCK_BUTTON" in
         ;;
     3)
         # Right click → manual refresh
-        notify-send "   Refreshing..." "Updating package list..."
-        kill -44 "$(pidof dwmblocks)"
+        if [ -f /var/lib/pacman/db.lck ]; then
+            notify-send "  Skipped" "Pacman/yay is already running."
+        else
+            notify-send "   Refreshing..." "Updating package list..."
+            setsid -f bash -c 'yay -Sy >/dev/null 2>&1 && kill -44 $(pidof dwmblocks)'
+        fi
         ;;
+
 esac
 
 # Count total updates
