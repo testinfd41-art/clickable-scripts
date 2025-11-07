@@ -15,7 +15,7 @@ muted=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -o MUTED)
 
 # If muted
 if [ -n "$muted" ]; then
-    echo " "
+    echo "󰖁"
     exit
 fi
 
@@ -28,7 +28,7 @@ elif [ "$vol_num" -ge 30 ]; then
 elif [ "$vol_num" -ge 1 ]; then
     icon=""
 else
-    icon=""
+    icon="󰖁"
 fi
 
 echo "$icon ${vol_num}%"

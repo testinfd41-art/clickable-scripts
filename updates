@@ -1,48 +1,42 @@
-#!/bin/bash
-# dwmblocks: show Arch + AUR updates (yay only, clickable, list in notification)
+#!/usr/bin/env bash
 
-export PATH="/usr/local/bin:/usr/bin:/bin"
+# ─────────────────────────────────────────────
+#   DWMBlocks Update Checker — Arch + yay
+# ─────────────────────────────────────────────
 
-# Handle clicks
-case "$BLOCK_BUTTON" in
-    1)
-        # Left click → open terminal and update system
-        setsid -f st -e bash -c 'yay -Syu; read -p "Press Enter to close..."'
-        ;;
-    2)
-        # Middle click → show list of updates in notification
-        updates=$(yay -Qu 2>/dev/null)
-        if [ -n "$updates" ]; then
-            # Limit notification length if too many updates
-            short=$(echo "$updates" | head -n 15)
-            total=$(echo "$updates" | wc -l)
-            if [ "$total" -gt 15 ]; then
-                short="$short\n… and $((total-15)) more"
-            fi
-            notify-send "  Packages to Update ($total)" "$short"
+# Check if a command exists
+_checkCommandExists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Prevent multiple concurrent runs
+script_name=$(basename "$0")
+instance_count=$(ps aux | grep -F "$script_name" | grep -v grep | grep -v $$ | wc -l)
+[ $instance_count -gt 1 ] && sleep $instance_count
+
+cache_file="/tmp/updates_count"
+
+# Function to count updates
+get_updates() {
+    if _checkCommandExists pacman; then
+        while [ -f /var/lib/pacman/db.lck ]; do sleep 1; done
+        if _checkCommandExists yay; then
+            updates_aur=$(yay -Qum 2>/dev/null | wc -l)
+            updates_pacman=$(checkupdates 2>/dev/null | wc -l)
+            echo $((updates_aur + updates_pacman))
         else
-            notify-send "  Up to Date" "No updates available."
+            checkupdates 2>/dev/null | wc -l
         fi
-        ;;
-    3)
-        # Right click → manual refresh
-        if [ -f /var/lib/pacman/db.lck ]; then
-            notify-send "  Skipped" "Pacman/yay is already running."
-        else
-            notify-send "   Refreshing..." "Updating package list..."
-            setsid -f bash -c 'yay -Sy >/dev/null 2>&1 && kill -44 $(pidof dwmblocks)'
-        fi
-        ;;
+    fi
+}
 
-esac
+# Normal execution: show number of updates
+updates=$(get_updates)
+echo "$updates" > "$cache_file"
 
-# Count total updates
-updates=$(yay -Qu 2>/dev/null | wc -l)
-
-# Display for dwmblocks
-if [ "$updates" -gt 0 ]; then
-    echo " $updates"
+if [ "$updates" -eq 0 ]; then
+    echo " 0"
 else
-    echo ""
+    echo " $updates"
 fi
 
