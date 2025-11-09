@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# ─────────────────────────────────────────────
-#   DWMBlocks Update Checker — Arch + yay
-# ─────────────────────────────────────────────
-
 # Check if a command exists
 _checkCommandExists() {
     command -v "$1" >/dev/null 2>&1

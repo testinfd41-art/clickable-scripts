@@ -1,34 +1,47 @@
 #!/bin/sh
-# dwmblocks cmus music block (clickable + truncated title + paused shows same title)
+# dwmblocks cmus music block (persistent + clickable + remembers last song)
+
+STATE_FILE="$HOME/.cache/cmus_last_song"
 
 # Handle clicks
 case $BLOCK_BUTTON in
-    2) cmus-remote -u ;;  # Middle click → toggle play/pause
+    1) setsid -f st -e cmus ;;      # Left click → open cmus in a terminal
+    2) cmus-remote -u 2>/dev/null ;; # Middle click → toggle play/pause
 esac
 
-# Fetch info from cmus
+# Get cmus info
 info=$(cmus-remote -Q 2>/dev/null)
 
-# Exit if cmus isn't running
-[ -z "$info" ] && exit
+if [ -n "$info" ]; then
+    status=$(echo "$info" | awk '/^status/ {print $2}')
+    title=$(echo "$info" | awk -F 'title ' '/^tag title/ {print $2}')
 
-# Get playback status
-status=$(echo "$info" | awk '/^status/ {print $2}')
-title=$(echo "$info" | awk -F 'title ' '/^tag title/ {print $2}')
+    # If title found, save it
+    if [ -n "$title" ]; then
+        echo "$title" > "$STATE_FILE"
+    fi
+else
+    status="stopped"
+fi
 
-# If no title, exit silently
-[ -z "$title" ] && exit
+# Load last song if available
+if [ -z "$title" ] && [ -f "$STATE_FILE" ]; then
+    title=$(cat "$STATE_FILE")
+fi
+
+# If still empty, show default text
+[ -z "$title" ] && title="No music"
 
 # Truncate long titles
 maxlen=25
-if [ ${#title} -gt $maxlen ]; then
-    title="${title:0:$maxlen}…"
-fi
+[ ${#title} -gt $maxlen ] && title="${title:0:$maxlen}…"
 
-# Show icon depending on status
-if [ "$status" = "playing" ]; then
-    echo " $title"
-elif [ "$status" = "paused" ]; then
-    echo " $title"
-fi
+# Choose icon
+case "$status" in
+    playing) icon="" ;;
+    paused)  icon="" ;;
+    *)       icon="" ;;  # stopped or no player
+esac
+
+echo "$icon $title"
 
